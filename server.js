@@ -3,9 +3,13 @@ const axios = require('axios');
 const app = express();
 const PORT = process.env.PORT || 3000;
 
-// Vì API gốc đã có lỗi trước đó, chúng ta sẽ giả lập một API lịch sử
+// Vì API gốc có thể không ổn định, chúng ta sẽ giả lập một API lịch sử
 // để đảm bảo code chạy ổn định 100% trên máy bạn.
 const MOCK_HISTORY_API_URL = 'https://sun-predict-5ghi.onrender.com/api/taixiu/history';
+
+// Cache để lưu trữ giá trị độ tin cậy và số phiên
+let cachedConfidence = null;
+let cachedSession = null;
 
 // --- THUẬT TOÁN DỰ ĐOÁN CỦA BẠN ĐÃ ĐƯỢC TÍCH HỢP ---
 
@@ -14,7 +18,6 @@ function duDoanTheoXiNgau(diceList) {
     if (!diceList || diceList.length === 0) {
         return "Đợi thêm dữ liệu";
     }
-    // Lấy 3 mặt xí ngầu của phiên gần nhất để tính toán
     const [d1, d2, d3] = diceList.slice(-1)[0];
     const total = d1 + d2 + d3;
     const resultList = [];
@@ -105,14 +108,21 @@ app.get('/api/taixiu/du_doan_sunwin', async (req, res) => {
         const nextSession = currentData.session + 1;
         const { du_doan, do_tin_cay, giai_thich } = predictTaiXiu(historicalData);
 
+        // Kiểm tra nếu phiên hiện tại khác với phiên đã cache, thì tạo độ tin cậy mới
+        if (cachedSession !== currentData.session) {
+            cachedSession = currentData.session;
+            cachedConfidence = getRandomConfidence() + "%";
+        }
+        
         const result = {
+            id: "@cskhtoollxk",
             phien_truoc: currentData.session,
             xuc_xac: currentData.dice,
             tong_xuc_xac: currentData.total,
             ket_qua: currentData.result,
             phien_sau: nextSession,
             du_doan: du_doan,
-            do_tin_cay: do_tin_cay,
+            do_tin_cay: cachedConfidence, // Sử dụng giá trị đã cache
             giai_thich: giai_thich,
         };
         res.json(result);
