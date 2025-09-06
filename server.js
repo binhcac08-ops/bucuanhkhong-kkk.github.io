@@ -10,7 +10,7 @@ const historicalDataCache = new NodeCache({ stdTTL: 600, checkperiod: 120 });
 // URL của API Sunwin gốc
 const SUNWIN_API_URL = 'https://saobody-lopq.onrender.com/api/taixiu/sunwin';
 
-// --- BẮT ĐẦU THUẬT TOÁN DỰ ĐOÁN MỚI ĐƯỢC DỊCH TỪ PYTHON SANG JAVASCRIPT ---
+// --- BẮT ĐẦU THUẬT TOÁN DỰ ĐOÁN MỚI (KHÔNG CÓ PATTERN) ---
 
 // Hàm dự đoán theo xí ngầu
 function duDoanTheoXiNgau(diceList) {
@@ -39,64 +39,24 @@ function duDoanTheoXiNgau(diceList) {
     return Object.keys(counts).reduce((a, b) => (counts[a] > counts[b]) ? a : b, "");
 }
 
-// Kiểm tra mẫu cầu xấu
-function isCauXau(cauStr) {
-    const mauCauXau = [
-        "TXXTX", "TXTXT", "XXTXX", "XTXTX", "TTXTX",
-        "XTTXT", "TXXTT", "TXTTX", "XXTTX", "XTXTT",
-        "TXTXX", "XXTXT", "TTXXT", "TXTTT", "XTXTX",
-        "XTXXT", "XTTTX", "TTXTT", "XTXTT", "TXXTX"
-    ];
-    return mauCauXau.includes(cauStr.toUpperCase());
-}
-
-// Kiểm tra mẫu cầu đẹp
-function isCauDep(cauStr) {
-    const mauCauDep = [
-        "TTTTT", "XXXXX", "TTTXX", "XXTTT", "TXTXX",
-        "TTTXT", "XTTTX", "TXXXT", "XXTXX", "TXTTT",
-        "XTTTT", "TTXTX", "TXXTX", "TXTXT", "XTXTX",
-        "TTTXT", "XTTXT", "TXTXT", "XXTXX", "TXXXX"
-    ];
-    return mauCauDep.includes(cauStr.toUpperCase());
-}
-
-// Hàm dự đoán chính, sử dụng logic của bạn
+// Hàm dự đoán chính, giờ chỉ sử dụng logic xí ngầu
 function predictTaiXiu(historicalData) {
-    if (!historicalData || historicalData.length < 5) {
+    if (!historicalData || historicalData.length === 0) {
         return {
             du_doan: "Đang thu thập dữ liệu...",
             do_tin_cay: "Chưa đủ",
-            giai_thich: "Cần ít nhất 5 phiên lịch sử để phân tích.",
+            giai_thich: "Chưa có dữ liệu để phân tích.",
             pattern: ""
         };
     }
 
-    // Lấy 5 kết quả gần nhất để phân tích mẫu hình
-    const patternHistory = historicalData.slice(-5).map(item => item.ket_qua === 'Tài' ? 'T' : 'X').join('');
-
     const predictionByDice = duDoanTheoXiNgau(historicalData.map(item => [item.xuc_xac_1, item.xuc_xac_2, item.xuc_xac_3]));
-    let finalPrediction = predictionByDice;
-    let doTinCay = "70%";
-    let giaiThich = "Dự đoán dựa trên thuật toán phân tích xí ngầu.";
-
-    if (isCauXau(patternHistory)) {
-        finalPrediction = (finalPrediction === 'Tài') ? "Xỉu" : "Tài";
-        giaiThich = `Cảnh báo: Phát hiện CẦU XẤU (${patternHistory}). Đảo ngược kết quả dự đoán.`;
-        doTinCay = "65%";
-    } else if (isCauDep(patternHistory)) {
-        giaiThich = `Cầu đẹp (${patternHistory}). Giữ nguyên kết quả dự đoán.`;
-        doTinCay = "85%";
-    } else {
-        giaiThich = `Không phát hiện mẫu cầu xấu/đẹp rõ ràng (${patternHistory}). Sử dụng kết quả dự đoán từ xí ngầu.`;
-        doTinCay = "70%";
-    }
 
     return {
-        du_doan: finalPrediction,
-        do_tin_cay: doTinCay,
-        giai_thich: giaiThich,
-        pattern: patternHistory
+        du_doan: predictionByDice,
+        do_tin_cay: "70%",
+        giai_thich: "Dự đoán dựa trên thuật toán phân tích xí ngầu.",
+        pattern: ""
     };
 }
 
@@ -135,8 +95,8 @@ app.get('/api/taixiu/du_doan_sunwin', async (req, res) => {
             du_doan: du_doan,
             do_tin_cay: do_tin_cay,
             giai_thich: giai_thich,
-            pattern: pattern
         };
+        // Bỏ pattern trong phản hồi
 
         res.json(result);
 
@@ -147,8 +107,8 @@ app.get('/api/taixiu/du_doan_sunwin', async (req, res) => {
             details: error.message,
             du_doan: "Không thể dự đoán",
             do_tin_cay: "0%",
-            giai_thich: "Lỗi hệ thống hoặc không đủ dữ liệu.",
-            pattern: ""
+            giai_thich: "Lỗi hệ thống hoặc không đủ dữ liệu."
+            // Bỏ pattern trong phản hồi
         });
     }
 });
