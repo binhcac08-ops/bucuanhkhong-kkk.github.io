@@ -9,7 +9,7 @@ const PORT = process.env.PORT || 3000;
 const historicalDataCache = new NodeCache({ stdTTL: 600, checkperiod: 120 });
 
 // URL của API Sunwin gốc
-const SUNWIN_API_URL = 'https://saobody-lopq.onrender.com/api/taixiu/sunwin';
+const SUNWIN_API_URL = 'https://sun-predict-5ghi.onrender.com/api/taixiu/history';
 
 // Hàm mô phỏng thuật toán dự đoán Tài Xỉu
 // Đây là một ví dụ RẤT ĐƠN GIẢN VÀ MINH HỌA.
