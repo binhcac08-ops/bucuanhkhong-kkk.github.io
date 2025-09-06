@@ -64,7 +64,7 @@ function predictTaiXiu(historicalData) {
     return {
         du_doan: predictionByDice,
         do_tin_cay: getRandomConfidence() + "%",
-        giai_thich: "Dự đoán dựa trên thuật toán phân tích xí ngầu.",
+        giai_thich: "bú cu anh không mấy tk em",
     };
 }
 
